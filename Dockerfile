@@ -1,4 +1,4 @@
-FROM golang:1.15.6-buster
+FROM golang:1.16.5-buster
 
 ENV GOPATH=/tmp/gotools
 ENV GO111MODULE=on
