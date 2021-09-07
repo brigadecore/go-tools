@@ -14,7 +14,11 @@ RUN go get -v \
     && curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /usr/local/bin v1.33.0 \
     #
     # Clean up
-    && rm -rf $GOPATH
+    && rm -rf $GOPATH \
+    #
+    # Install codecov
+    && curl -o /usr/local/bin/codecov https://uploader.codecov.io/v0.1.0_8880/linux/codecov \
+    && chmod 755 /usr/local/bin/codecov
 
 # Put go env vars back to normal
 ENV GOPATH=/go
