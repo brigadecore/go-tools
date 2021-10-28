@@ -11,7 +11,7 @@ RUN go get -v \
     && mv $GOPATH/bin/* /usr/local/bin/ \
     #
     # Install golangci-lint
-    && curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /usr/local/bin v1.33.0 \
+    && curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /usr/local/bin v1.42.1 \
     #
     # Clean up
     && rm -rf $GOPATH \
