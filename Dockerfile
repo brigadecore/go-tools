@@ -1,4 +1,4 @@
-FROM golang:1.17.0-bullseye
+FROM golang:1.17.2-bullseye
 
 ENV GOPATH=/tmp/gotools
 ENV GO111MODULE=on
@@ -11,7 +11,7 @@ RUN go get -v \
     && mv $GOPATH/bin/* /usr/local/bin/ \
     #
     # Install golangci-lint
-    && curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /usr/local/bin v1.33.0 \
+    && curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /usr/local/bin v1.42.1 \
     #
     # Clean up
     && rm -rf $GOPATH \
