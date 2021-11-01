@@ -11,26 +11,7 @@ SHELL ?= /bin/bash
 GIT_VERSION = $(shell git describe --always --abbrev=7 --dirty --match=NeVeRmAtCh)
 
 ################################################################################
-# Containerized development environment-- or lack thereof                      #
-################################################################################
-
-ifneq ($(SKIP_DOCKER),true)
-	PROJECT_ROOT := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
-
-	KANIKO_IMAGE := brigadecore/kaniko:v0.2.0
-
-	KANIKO_DOCKER_CMD := docker run \
-		-it \
-		--rm \
-		-e SKIP_DOCKER=true \
-		-e DOCKER_PASSWORD=$${DOCKER_PASSWORD} \
-		-v $(PROJECT_ROOT):/workspaces/go-tools \
-		-w /workspaces/go-tools \
-		$(KANIKO_IMAGE)
-endif
-
-################################################################################
-# Docker images we build and publish                              #
+# Build                                                                        #
 ################################################################################
 
 ifdef DOCKER_REGISTRY
@@ -41,7 +22,7 @@ ifdef DOCKER_ORG
 	DOCKER_ORG := $(DOCKER_ORG)/
 endif
 
-DOCKER_IMAGE_PREFIX := $(DOCKER_REGISTRY)$(DOCKER_ORG)
+DOCKER_IMAGE_NAME := $(DOCKER_REGISTRY)$(DOCKER_ORG)go-tools
 
 ifdef VERSION
 	MUTABLE_DOCKER_TAG := latest
@@ -54,10 +35,11 @@ IMMUTABLE_DOCKER_TAG := $(VERSION)
 
 .PHONY: build
 build:
-	$(KANIKO_DOCKER_CMD) kaniko \
-		--dockerfile /workspaces/go-tools/Dockerfile \
-		--context dir:///workspaces/go-tools/ \
-		--no-push
+	docker buildx build \
+		-t $(DOCKER_IMAGE_NAME):$(IMMUTABLE_DOCKER_TAG) \
+		-t $(DOCKER_IMAGE_NAME):$(MUTABLE_DOCKER_TAG) \
+		--platform linux/amd64,linux/arm64 \
+		.
 
 ################################################################################
 # Publish                                                                      #
@@ -65,11 +47,28 @@ build:
 
 .PHONY: push
 push:
-	$(KANIKO_DOCKER_CMD) sh -c ' \
-		docker login $(DOCKER_REGISTRY) -u $(DOCKER_USERNAME) -p $${DOCKER_PASSWORD} && \
-		kaniko \
-			--dockerfile /workspaces/go-tools/Dockerfile \
-			--context dir:///workspaces/go-tools/ \
-			--destination $(DOCKER_IMAGE_PREFIX)go-tools:$(IMMUTABLE_DOCKER_TAG) \
-			--destination $(DOCKER_IMAGE_PREFIX)go-tools:$(MUTABLE_DOCKER_TAG) \
-	'
+	docker login $(DOCKER_REGISTRY) -u $(DOCKER_USERNAME) -p $${DOCKER_PASSWORD}
+	docker buildx build \
+		-t $(DOCKER_IMAGE_NAME):$(IMMUTABLE_DOCKER_TAG) \
+		-t $(DOCKER_IMAGE_NAME):$(MUTABLE_DOCKER_TAG) \
+		--platform linux/amd64,linux/arm64 \
+		--push \
+		.
+
+################################################################################
+# Targets to facilitate hacking                                                #
+################################################################################
+
+.PHONY: hack-build
+hack-build:
+	docker build \
+		-t $(DOCKER_IMAGE_NAME):$(IMMUTABLE_DOCKER_TAG) \
+		-t $(DOCKER_IMAGE_NAME):$(MUTABLE_DOCKER_TAG) \
+		--build-arg VERSION='$(VERSION)' \
+		--build-arg COMMIT='$(GIT_VERSION)' \
+		.
+
+.PHONY: hack-push
+hack-push: hack-build
+	docker push $(DOCKER_IMAGE_NAME):$(IMMUTABLE_DOCKER_TAG)
+	docker push $(DOCKER_IMAGE_NAME):$(MUTABLE_DOCKER_TAG)

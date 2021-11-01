@@ -17,3 +17,5 @@ spec:
   workerTemplate:
     git:
       cloneURL: https://github.com/brigadecore/go-tools.git
+    jobPolicies:
+      allowPrivileged: true
