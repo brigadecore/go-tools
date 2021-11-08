@@ -1,6 +1,7 @@
 # Brigade Go Tools Image
 
 ![build](https://badgr.brigade2.io/v1/github/checks/brigadecore/go-tools/badge.svg?appID=99005)
+[![slack](https://img.shields.io/badge/slack-brigade-brightgreen.svg?logo=slack)](https://kubernetes.slack.com/messages/C87MF1RFD)
 
 This project provides a curated set of containerized Go tools to facilitate
 development of [Brigade](https://github.com/brigadecore/brigade) and several
