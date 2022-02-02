@@ -1,4 +1,4 @@
-FROM golang:1.17.2-bullseye
+FROM golang:1.17.6-bullseye
 
 ENV GOPATH=/tmp/gotools
 ENV GO111MODULE=on
