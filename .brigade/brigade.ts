@@ -107,15 +107,8 @@ const pushJob = (event: Event, version?: string) => {
 }
 jobs[pushJobName] = pushJob
 
-// Just build, unless this is a merge to main, then build and push.
 events.on("brigade.sh/github", "ci:pipeline_requested", async event => {
-  if (event.worker?.git?.ref != "main") {
-    // Just build
-    await buildJob(event).run()
-  } else {
-    // Build and push
-    await pushJob(event).run()
-  }
+  await buildJob(event).run()
 })
 
 // This event indicates a specific job is to be re-run.
