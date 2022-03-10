@@ -1,7 +1,7 @@
 FROM golang:1.17.6-bullseye
 
-ENV GOPATH=/tmp/gotools
-ENV GO111MODULE=on
+ARG GOPATH=/tmp/gotools
+ARG GO111MODULE=on
 
 RUN go get -v \
     golang.org/x/tools/cmd/goimports@release-branch.go1.15 \
@@ -19,7 +19,3 @@ RUN go get -v \
     # Install codecov
     && curl -o /usr/local/bin/codecov https://uploader.codecov.io/v0.1.0_8880/linux/codecov \
     && chmod 755 /usr/local/bin/codecov
-
-# Put go env vars back to normal
-ENV GOPATH=/go
-ENV GO111MODULE=auto
