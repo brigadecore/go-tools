@@ -1,4 +1,4 @@
-FROM golang:1.17.6-bullseye
+FROM golang:1.17.8-bullseye
 
 ENV GOPATH=/tmp/gotools
 ENV GO111MODULE=on
@@ -6,7 +6,6 @@ ARG GOLANGCI_LINT_VERSION=v1.44.2
 
 RUN go get -v \
     golang.org/x/tools/cmd/goimports@release-branch.go1.15 \
-    github.com/gobuffalo/packr/v2/packr2@v2.8.1 \
     #
     # Install Go tools
     && mv $GOPATH/bin/* /usr/local/bin/ \
