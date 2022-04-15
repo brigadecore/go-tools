@@ -45,7 +45,7 @@ scan:
 generate-sbom:
 	syft $(DOCKER_IMAGE_NAME):$(IMMUTABLE_DOCKER_TAG) \
 		-o spdx-json \
-		--file ./artifacts/brigade-acr-gateway-$(VERSION)-SBOM.json
+		--file ./artifacts/go-tools-$(VERSION)-SBOM.json
 
 .PHONY: publish-sbom
 publish-sbom: generate-sbom
@@ -55,7 +55,7 @@ publish-sbom: generate-sbom
 		-c $$(git rev-parse HEAD) \
 		-t $${GITHUB_TOKEN} \
 		-n ${VERSION} \
-		${VERSION} ./artifacts/brigade-acr-gateway-$(VERSION)-SBOM.json
+		${VERSION} ./artifacts/go-tools-$(VERSION)-SBOM.json
 
 ################################################################################
 # Publish                                                                      #
