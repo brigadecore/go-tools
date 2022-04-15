@@ -1,6 +1,6 @@
 {
   "name": "go-tools-ci-cd",
   "dependencies": {
-    "@brigadecore/brigadier": "^2.1.0"
+    "@brigadecore/brigadier": "^2.4.0"
   }
 }
