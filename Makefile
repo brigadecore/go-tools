@@ -1,6 +1,6 @@
 SHELL ?= /bin/bash
 
-.DEFAULT_GOAL := build
+.DEFAULT_GOAL := push
 
 ################################################################################
 # Version details                                                              #
@@ -11,7 +11,7 @@ SHELL ?= /bin/bash
 GIT_VERSION = $(shell git describe --always --abbrev=7 --dirty --match=NeVeRmAtCh)
 
 ################################################################################
-# Build                                                                        #
+# Docker images we build and publish                                           #
 ################################################################################
 
 ifdef DOCKER_REGISTRY
@@ -33,14 +33,29 @@ endif
 
 IMMUTABLE_DOCKER_TAG := $(VERSION)
 
-.PHONY: build
-build:
-	docker login $(DOCKER_REGISTRY) -u $(DOCKER_USERNAME) -p $${DOCKER_PASSWORD}
-	docker buildx build \
-		-t $(DOCKER_IMAGE_NAME):$(IMMUTABLE_DOCKER_TAG) \
-		-t $(DOCKER_IMAGE_NAME):$(MUTABLE_DOCKER_TAG) \
-		--platform linux/amd64,linux/arm64 \
-		.
+################################################################################
+# Image security                                                               #
+################################################################################
+
+.PHONY: scan
+scan:
+	grype $(DOCKER_IMAGE_NAME):$(IMMUTABLE_DOCKER_TAG) -f medium
+
+.PHONY: generate-sbom
+generate-sbom:
+	syft $(DOCKER_IMAGE_NAME):$(IMMUTABLE_DOCKER_TAG) \
+		-o spdx-json \
+		--file ./artifacts/brigade-acr-gateway-$(VERSION)-SBOM.json
+
+.PHONY: publish-sbom
+publish-sbom: generate-sbom
+	ghr \
+		-u $(GITHUB_ORG) \
+		-r $(GITHUB_REPO) \
+		-c $$(git rev-parse HEAD) \
+		-t $${GITHUB_TOKEN} \
+		-n ${VERSION} \
+		${VERSION} ./artifacts/brigade-acr-gateway-$(VERSION)-SBOM.json
 
 ################################################################################
 # Publish                                                                      #
@@ -48,7 +63,6 @@ build:
 
 .PHONY: push
 push:
-	docker login $(DOCKER_REGISTRY) -u $(DOCKER_USERNAME) -p $${DOCKER_PASSWORD}
 	docker buildx build \
 		-t $(DOCKER_IMAGE_NAME):$(IMMUTABLE_DOCKER_TAG) \
 		-t $(DOCKER_IMAGE_NAME):$(MUTABLE_DOCKER_TAG) \
@@ -56,20 +70,11 @@ push:
 		--push \
 		.
 
-################################################################################
-# Targets to facilitate hacking                                                #
-################################################################################
-
-.PHONY: hack-build
-hack-build:
-	docker build \
-		-t $(DOCKER_IMAGE_NAME):$(IMMUTABLE_DOCKER_TAG) \
-		-t $(DOCKER_IMAGE_NAME):$(MUTABLE_DOCKER_TAG) \
-		--build-arg VERSION='$(VERSION)' \
-		--build-arg COMMIT='$(GIT_VERSION)' \
-		.
-
-.PHONY: hack-push
-hack-push: hack-build
-	docker push $(DOCKER_IMAGE_NAME):$(IMMUTABLE_DOCKER_TAG)
-	docker push $(DOCKER_IMAGE_NAME):$(MUTABLE_DOCKER_TAG)
+.PHONY: sign
+sign:
+	docker pull $(DOCKER_IMAGE_NAME):$(IMMUTABLE_DOCKER_TAG)
+	docker pull $(DOCKER_IMAGE_NAME):$(MUTABLE_DOCKER_TAG)
+	docker trust sign $(DOCKER_IMAGE_NAME):$(IMMUTABLE_DOCKER_TAG)
+	docker trust sign $(DOCKER_IMAGE_NAME):$(MUTABLE_DOCKER_TAG)
+	docker trust inspect --pretty $(DOCKER_IMAGE_NAME):$(IMMUTABLE_DOCKER_TAG)
+	docker trust inspect --pretty $(DOCKER_IMAGE_NAME):$(MUTABLE_DOCKER_TAG)
